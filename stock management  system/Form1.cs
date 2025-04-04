@@ -43,23 +43,42 @@ namespace stock_management__system
         }
 
         private void button1_Click(object sender, EventArgs e)
+
         {
-            if(textBox1.Text == "" || textBox2.Text == "")
+
+            string username = textBox2.Text.Trim();
+            string password = textBox1.Text.Trim();
+
+            
+            if (username == "" || password == "")
             {
                 MessageBox.Show("Please Enter Username and Password");
             }
-            
-
-            else if (textBox2.Text == "admin" || textBox1.Text == "12345")
-            {
-                this.Hide();
-                Form2 f2 = new Form2();
-                f2.Show();
-            }
             else
             {
-                MessageBox.Show("Invalid Username or Password");
+                
+                if (username == "admin" && password == "12345")
+                {
+                    
+                    this.Hide();
+                    Main f2 = new Main();
+                    f2.Show();
+                }
+                else
+                {
+                    MessageBox.Show("Invalid Username or Password");
+                }
             }
         }
+
+
+
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
     }
-}
+    }
+
+

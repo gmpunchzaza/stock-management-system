@@ -14,19 +14,38 @@ namespace stock_management__system
 
         public void Connect()
         {
-            con = new SqlConnection("Data Source=DESKTOP-U196HJO\\MSSQLSERVER01;Initial Catalog=stock;Integrated Security=True;TrustServerCertificate=True");
+            if (con == null)
+            {
+                con = new SqlConnection("Server=tcp:stockserverzzz.database.windows.net,1433;Initial Catalog=stock;Persist Security Info=False;User ID=punch;Password=GMpp12531254;MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            }
+
             try
             {
-
-                con.Open();
-
+                if (con.State == System.Data.ConnectionState.Closed)
+                {
+                    con.Open();
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Connection Error: " + ex.Message);
             }
-
         }
+
+     /*   public void Disconnect()
+        {
+            try
+            {
+                if (con != null && con.State == System.Data.ConnectionState.Open)
+                {
+                    con.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error closing connection: " + ex.Message);
+            }
+        }*/
     }
 }
 

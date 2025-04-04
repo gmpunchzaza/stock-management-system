@@ -33,5 +33,16 @@ namespace stock_management__system.Properties {
                 return ((string)(this["stockConnectionString"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=stockserverzzz.database.windows.net;Initial Catalog=stock;User ID=pun" +
+            "ch;Password=GMpp12531254")]
+        public string stockConnectionString1 {
+            get {
+                return ((string)(this["stockConnectionString1"]));
+            }
+        }
     }
 }

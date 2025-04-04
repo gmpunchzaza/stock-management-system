@@ -5,37 +5,67 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
+
+
 namespace stock_management__system
 {
-    public partial class Form2 : Form
+    public partial class Main : Form
     {
-        public Form2()
+        private Timer timer;
+        private DataTable dtProducts;
+        private DataTable dtSuppliers;
+        public Main()
         {
             InitializeComponent();
-             
-             UserControl1 userControl1 = new UserControl1();
-             this.Controls.Add(userControl1); 
+           
+            UserControl1 userControl1 = new UserControl1();
+            this.Controls.Add(userControl1); 
             userControl1.Visible = false;
+            
             UserControl2 userControl2 = new UserControl2();
             this.Controls.Add(userControl2);
+
+            datausercontrol datausercontrol = new datausercontrol();
+            this.Controls.Add(datausercontrol);
+            datausercontrol.Visible = false;
+
             userControl2.Visible = false;
-            userControl21.Visible = false;
+            addpnl.Visible = false;
+            storagepnl.Visible = true;
+            tranpnl.Visible = false;
+            datapnl.Visible = false;
+
+            maskedTextBox1.Text = DateTime.Now.ToString("MM/dd/yyyy");
+            maskedTextBox2.Text = DateTime.Now.ToString("HH:mm");
+
+
         }
+        
         connectclass con = new connectclass();
         
         private void Form2_Load(object sender, EventArgs e)
         {
             
-            loadjoineddata();
-            userControl11.Hide();
+            this.productsTableAdapter1.Fill(this.stockDataSet2.Products);
 
+            loadjoineddata();
             
-             
+            
+            userControl11.Show();
+            userControl11.BringToFront();
+            userControl21.Hide();
+            userControl11.loadjoineddata1();
+            datausercontrol1.Hide();
+           // datausercontrol1.Loaddata();
+
+
+
 
         }
 
@@ -43,16 +73,30 @@ namespace stock_management__system
         private void loadjoineddata()
         {
             con.Connect();
-            SqlDataAdapter sda = new SqlDataAdapter("select p.Productid,p.Productname, c.CategoryName, s.SupplierName, t.Quantity, p.Price,p.cost, p.UnitOfMeasure, t.Date,t.Time,t.type,t.Total FROM Products p INNER JOIN Categories c ON p.CategoryID = c.CategoryID INNER JOIN Suppliers s ON p.SupplierID = s.SupplierID INNER JOIN Transactions as t ON p.productid = t.productid left JOIN Stock as st ON p.Productid = st.Productid ", connectclass.con);
+            SqlDataAdapter sda = new SqlDataAdapter("SELECT t.Date, t.Time, p.Productname AS Product, c.CategoryName AS Category, s.SupplierName AS Supplier, t.Quantity AS Qty, p.Price, p.Cost AS Cost, p.UnitOfMeasure AS Unit, t.Type, t.Total FROM Products p INNER JOIN Categories c ON p.CategoryID = c.CategoryID INNER JOIN Suppliers s ON p.SupplierID = s.SupplierID INNER JOIN Transactions t ON p.ProductID = t.ProductID LEFT JOIN Stock st ON p.ProductID = st.ProductID order by t.date desc, t.time desc", connectclass.con);
             DataTable dt = new DataTable();
             sda.Fill(dt);
             dataGridView1.DataSource = dt;
+
+            SqlDataAdapter sda1 = new SqlDataAdapter("SELECT DISTINCT p.Productid, p.Productname, s.suppliername, s.supplierid FROM Products p LEFT JOIN Suppliers s ON p.supplierid = s.supplierid ORDER BY p.productname ASC", connectclass.con);
+            dtProducts = new DataTable();
+            sda1.Fill(dtProducts);
+
+            dtSuppliers = dtProducts.Clone();
+            prodcombo.DataSource = dtProducts;
+            prodcombo.DisplayMember = "Productname";
+            prodcombo.ValueMember = "Productid";
+            
+            connectclass.con.Close();
         }
+
+       
+        
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
-
+        
         private void dataGridView1_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
         {
              if (e.RowIndex >= 0)
@@ -108,7 +152,8 @@ namespace stock_management__system
 
         private void insertbtn_Click(object sender, EventArgs e)
         {
-            if (comboBox1.Text == "" || maskedTextBox1.Text == "" || textBox4.Text == "" || textBox5.Text == "" || maskedTextBox2.Text == "")
+           
+            if (comboBox1.Text == "" || maskedTextBox1.Text == "" || prodcombo.Text == "" || textBox5.Text == "" || maskedTextBox2.Text == "")
             {
                 MessageBox.Show("Please fill all the fields");
             }
@@ -125,13 +170,17 @@ namespace stock_management__system
 
                 con.Connect();
                 SqlCommand cmd = new SqlCommand(query, connectclass.con);
-                cmd.Parameters.AddWithValue("@Productid", textBox4.Text);
+                cmd.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue));
 
 
                 SqlCommand cmd2 = new SqlCommand(query2, connectclass.con);
-                cmd2.Parameters.AddWithValue("@Productid", textBox4.Text);
-
-
+                cmd2.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue));
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    c = Convert.ToInt32(reader["Price"]);
+                }
+                reader.Close();
                 SqlDataReader reader2 = cmd2.ExecuteReader();
                 if (reader2.Read())
                 {
@@ -145,7 +194,7 @@ namespace stock_management__system
 
 
                 SqlCommand insertCmd = new SqlCommand("INSERT INTO Transactions (Productid, Date, Type, Quantity, Total,Time) VALUES (@Productid, @Date, @Type, @Quantity, @Total, @Time)", connectclass.con);
-                insertCmd.Parameters.AddWithValue("@Productid", textBox4.Text);
+                insertCmd.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue));
                 insertCmd.Parameters.AddWithValue("@Date", maskedTextBox1.Text);
                 insertCmd.Parameters.AddWithValue("@Type", comboBox1.Text);
                 insertCmd.Parameters.AddWithValue("@Quantity", textBox5.Text);
@@ -154,7 +203,7 @@ namespace stock_management__system
 
                 SqlCommand updateCmd2 = new SqlCommand("UPDATE Stock SET QtyinStock = @QtyinStock WHERE Productid = @Productid", connectclass.con);
                 updateCmd2.Parameters.AddWithValue("@QtyinStock", currentstock);
-                updateCmd2.Parameters.AddWithValue("@Productid", textBox4.Text);
+                updateCmd2.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue));
 
                 insertCmd.ExecuteNonQuery();
                 updateCmd2.ExecuteNonQuery();
@@ -162,6 +211,7 @@ namespace stock_management__system
                 MessageBox.Show("Transaction Added Successfully");
 
                 loadjoineddata();
+                connectclass.con.Close();
             }
             else if (comboBox1.Text == "Purchase")
             {
@@ -176,7 +226,7 @@ namespace stock_management__system
 
                 
                 SqlCommand cmd1 = new SqlCommand(query1, connectclass.con);
-                cmd1.Parameters.AddWithValue("@Productid", textBox4.Text); 
+                cmd1.Parameters.AddWithValue("@Productid",Convert.ToInt32( prodcombo.SelectedValue)); 
 
                 
                 SqlDataReader reader1 = cmd1.ExecuteReader();
@@ -188,7 +238,7 @@ namespace stock_management__system
 
                 
                 SqlCommand cmd2 = new SqlCommand(query2, connectclass.con);
-                cmd2.Parameters.AddWithValue("@Productid", textBox4.Text); 
+                cmd2.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue)); 
 
                 
                 SqlDataReader reader2 = cmd2.ExecuteReader();
@@ -204,7 +254,7 @@ namespace stock_management__system
 
                 
                 SqlCommand insertCmd1 = new SqlCommand("INSERT INTO Transactions (Productid, Date, Type, Quantity, Total, Time) VALUES (@Productid, @Date, @Type, @Quantity, @Total, @Time)", connectclass.con);
-                insertCmd1.Parameters.AddWithValue("@Productid", textBox4.Text);  
+                insertCmd1.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue));  
                 insertCmd1.Parameters.AddWithValue("@Date", maskedTextBox1.Text);
                 insertCmd1.Parameters.AddWithValue("@Type", comboBox1.Text);
                 insertCmd1.Parameters.AddWithValue("@Quantity", textBox5.Text);
@@ -214,7 +264,7 @@ namespace stock_management__system
                 
                 SqlCommand updateCmd2 = new SqlCommand("UPDATE Stock SET QtyinStock = @QtyinStock WHERE Productid = @Productid", connectclass.con);
                 updateCmd2.Parameters.AddWithValue("@QtyinStock", currentstock);
-                updateCmd2.Parameters.AddWithValue("@Productid", textBox4.Text);  
+                updateCmd2.Parameters.AddWithValue("@Productid", Convert.ToInt32(prodcombo.SelectedValue));  
 
                 
                 insertCmd1.ExecuteNonQuery();
@@ -223,6 +273,8 @@ namespace stock_management__system
                 
                 MessageBox.Show("Transaction Added Successfully");
                 loadjoineddata();
+                connectclass.con.Close();
+
             }
                 }
             
@@ -237,6 +289,19 @@ namespace stock_management__system
         {
             userControl11.Hide();
             userControl21.Hide();
+            userControl21.BringToFront();
+            datausercontrol1.Hide();
+
+            tranpnl.Visible = true;
+            addpnl.Visible = false;
+            storagepnl.Visible = false;
+            datapnl.Visible = false;
+            loadjoineddata();
+            maskedTextBox1.Text = DateTime.Now.ToString("MM/dd/yyyy");
+            maskedTextBox2.Text = DateTime.Now.ToString("HH:mm");
+            
+
+
 
         }
 
@@ -246,6 +311,10 @@ namespace stock_management__system
             userControl11.Show();
             userControl11.loadjoineddata1();
             userControl21.Hide();
+            storagepnl.Visible = true;
+            tranpnl.Visible = false;
+            addpnl.Visible = false;
+            datapnl.Visible = false;
         }
 
         private void maskedTextBox1_MaskInputRejected(object sender, MaskInputRejectedEventArgs e)
@@ -258,7 +327,123 @@ namespace stock_management__system
             userControl11.Hide();
             userControl21.BringToFront();
             userControl21.Show();
+            addpnl.Visible = true;
+            storagepnl.Visible = false;
+            tranpnl.Visible = false; 
+            datapnl.Visible = false;
 
+        }
+
+        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void customPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void customPanel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void panel3_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void htmlPanel1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void homebtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tranpnl_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void databtn_Click(object sender, EventArgs e)
+        {
+            datausercontrol1.BringToFront();
+            datausercontrol1.Show();
+            datapnl.Visible = true;
+            storagepnl.Visible = false;
+            tranpnl.Visible = false;
+            addpnl.Visible = false;
+            userControl11.Hide();
+            userControl21.Hide();
+            datausercontrol1.Loaddata();
+            
+
+            datausercontrol1.LoadYearsIntoComboBox();
+            
+
+
+
+
+        }
+
+        private void datausercontrol1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void elementHost1_ChildChanged(object sender, System.Windows.Forms.Integration.ChildChangedEventArgs e)
+        {
+
+        }
+
+    private enum _Process_DPI_Awareness
+        {
+            Process_DPI_Unaware = 0,
+            Process_System_DPI_Aware = 1,
+            Process_Per_Monitor_DPI_Aware = 2
+        }
+
+        private void supcombox_SelectedIndexChanged(object sender, EventArgs e)
+        {
 
         }
     }

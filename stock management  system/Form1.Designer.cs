@@ -151,11 +151,12 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Impact", 28.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(638, 64);
+            this.label2.Location = new System.Drawing.Point(618, 64);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(241, 59);
             this.label2.TabIndex = 2;
             this.label2.Text = "Login Form ";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // pictureBox2
             // 
@@ -194,9 +195,10 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel2);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Formlogin";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Form1";
+            this.Text = "Stockcast";
             this.Load += new System.EventHandler(this.Formlogin_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();

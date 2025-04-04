@@ -11,13 +11,7 @@ using System.Data.SqlClient;
 
 namespace stock_management__system
 {
-    //อันนี้ยังไม่เสร็จ
-    //อันนี้ยังไม่เสร็จ
-    //อันนี้ยังไม่เสร็จ
-    //อันนี้ยังไม่เสร็จ
-    //อันนี้ยังไม่เสร็จ
-    //อันนี้ยังไม่เสร็จ
-    //อันนี้ยังไม่เสร็จ
+    
     public partial class UserControl2 : UserControl
     {
         public UserControl2()
@@ -28,17 +22,42 @@ namespace stock_management__system
         connectclass con = new connectclass();
         private void UserControl2_Load(object sender, EventArgs e)
         {
-            loadjoineddata2();
-            
+           loadjoineddata2();
+
         }
         public void loadjoineddata2()
         {
-            
+
             con.Connect();
-            SqlDataAdapter sda = new SqlDataAdapter("select s.SupplierName, c.CategoryName, p.ProductName, p.Price,p.cost, p.UnitOfMeasure, s.ContactEmail, s.PhoneNumber FROM Products p INNER JOIN Categories c ON p.CategoryID = c.CategoryID INNER JOIN Suppliers s ON p.SupplierID = s.SupplierID   ", connectclass.con);
-            DataTable dt = new DataTable();
-            sda.Fill(dt);
-            dataGridView1.DataSource = dt;
+
+            
+            SqlDataAdapter categoryAdapter = new SqlDataAdapter("SELECT DISTINCT CategoryID, CategoryName FROM Categories order by CategoryName asc ", connectclass.con);
+            DataTable categoryTable = new DataTable();
+            categoryAdapter.Fill(categoryTable);
+
+            
+            SqlDataAdapter supplierAdapter = new SqlDataAdapter("SELECT DISTINCT SupplierID, SupplierName FROM Suppliers order by SupplierName asc", connectclass.con);
+            DataTable supplierTable = new DataTable();
+            supplierAdapter.Fill(supplierTable);
+
+            SqlDataAdapter unit = new SqlDataAdapter("SELECT DISTINCT UnitOfMeasure FROM Products order by UnitOfMeasure asc  ", connectclass.con);
+            DataTable unitTable = new DataTable();
+            unit.Fill(unitTable);
+
+
+            Catcombo.DataSource = categoryTable;
+            Catcombo.DisplayMember = "CategoryName";
+            Catcombo.ValueMember = "CategoryID";
+
+            supbox.DataSource = supplierTable;
+            supbox.DisplayMember = "SupplierName";
+            supbox.ValueMember = "SupplierID";
+
+            unitbox.DataSource = unitTable;
+            unitbox.DisplayMember = "UnitOfMeasure";
+
+            connectclass.con.Close();
+
         }
 
         private void emailbox_TextChanged(object sender, EventArgs e)
@@ -48,31 +67,116 @@ namespace stock_management__system
 
         private void insertbtn_Click(object sender, EventArgs e)
         {
+            if (pronbox.Text == "" || pricebox.Text == "" || costbox.Text == "" || supbox.Text == "" || Catcombo.Text == "" || unitbox.Text == "")
+            {
+                MessageBox.Show("Please fill all the fields");
+
+            }
+            else
+            {
+                con.Connect();
+
+                SqlCommand cmd = new SqlCommand(@"INSERT INTO Products 
+                                      (Productname, CategoryID, SupplierID, UnitOfMeasure, Price, Cost) 
+                                      OUTPUT INSERTED.ProductID 
+                                      VALUES 
+                                      (@Productname, @CategoryID, @SupplierID, @UnitOfMeasure, @Price, @Cost)", connectclass.con);
+
+                cmd.Parameters.AddWithValue("@Productname", pronbox.Text);
+                cmd.Parameters.AddWithValue("@CategoryID", Catcombo.SelectedValue);
+                cmd.Parameters.AddWithValue("@SupplierID", supbox.SelectedValue);
+                cmd.Parameters.AddWithValue("@UnitOfMeasure", unitbox.Text);
+                cmd.Parameters.AddWithValue("@Price", Convert.ToDecimal(pricebox.Text));
+                cmd.Parameters.AddWithValue("@Cost", Convert.ToDecimal(costbox.Text));
+
+                int productId = (int)cmd.ExecuteScalar();
+
+                SqlCommand cmd1 = new SqlCommand("INSERT INTO Stock (ProductID, QTYinstock) VALUES (@ProductID, 0)", connectclass.con);
+                cmd1.Parameters.AddWithValue("@ProductID", productId);
+
+                cmd1.ExecuteNonQuery();
+                loadjoineddata2();
+                connectclass.con.Close();
+                MessageBox.Show("Product Added Successfully");
+            }
+        }
+
+        
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void supnbox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Catcombo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void supbox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (supnbox.Text == "" || emailbox.Text == "" || phonenummaskedbox.Text == "")
+            {
+                MessageBox.Show("Please fill all the fields");
+
+            }
+            else
+            {
+                con.Connect();
+                string queryint = "insert into Suppliers (SupplierName,ContactEmail,PhoneNumber) values (@SupplierName,@ContactEmail,@PhoneNumber)";
+                SqlCommand cmd = new SqlCommand(queryint, connectclass.con);
+                cmd.Parameters.AddWithValue("@SupplierName", supnbox.Text);
+                cmd.Parameters.AddWithValue("@ContactEmail", emailbox.Text);
+                cmd.Parameters.AddWithValue("@PhoneNumber", phonenummaskedbox.Text);
+                cmd.ExecuteNonQuery();
+                MessageBox.Show("Supplier Added Successfully!");
+                loadjoineddata2();
+                connectclass.con.Close();
+            }
+        }
             
-            con.Connect();
-            
-            SqlCommand cmd = new SqlCommand("insert into Suppliers(SupplierName, ContactEmail, PhoneNumber) values(@SupplierName, @ContactEmail, @PhoneNumber)", connectclass.con);
-            cmd.Parameters.AddWithValue("@SupplierName", supnbox.Text);
-            cmd.Parameters.AddWithValue("@ContactEmail", emailbox.Text);    
-            cmd.Parameters.AddWithValue("@PhoneNumber", phonenummaskedbox.Text);
-            cmd.ExecuteNonQuery();
-            
-            SqlCommand cmd1 = new SqlCommand("insert into Categories(CategoryName) values(@CategoryName)", connectclass.con);
-            cmd1.Parameters.AddWithValue("@CategoryName", catnbox.Text);
-            cmd1.ExecuteNonQuery();
 
-            SqlCommand cmd2 = new SqlCommand("insert into Products(ProductName, Price, cost, UnitOfMeasure) values(@ProductName, @Price, @cost, @UnitOfMeasure)", connectclass.con);
-            cmd2.Parameters.AddWithValue("@ProductName", pronbox.Text);
-            cmd2.Parameters.AddWithValue("@Price", pricebox.Text);
-            cmd2.Parameters.AddWithValue("@cost", costbox.Text);
-            cmd2.Parameters.AddWithValue("@UnitOfMeasure", unitbox.Text);
-            cmd2.ExecuteNonQuery();
+        private void costbox_TextChanged(object sender, EventArgs e)
+        {
 
-            SqlCommand cmd3 = new SqlCommand("insert into Stock(QtyinStock) values(0)", connectclass.con);
-            cmd3.ExecuteNonQuery();
+        }
 
-            loadjoineddata2();
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
 
+        }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label9_Click(object sender, EventArgs e)
+        {
+            tab tab = new tab();
+            tab.Show();
+        }
+
+        private void label8_Click(object sender, EventArgs e)
+        {
+            tabpro tabpro = new tabpro();
+            tabpro.Show();
+            tabpro.loadjoineddata();
         }
     }
 
